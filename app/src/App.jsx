@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { AnimatePresence, LayoutGroup, motion } from "framer-motion";
+import { AnimatePresence, LayoutGroup, motion, useIsPresent } from "framer-motion";
 import { Bell } from "lucide-react";
 import Background from "./components/Background.jsx";
 import Toast from "./components/Toast.jsx";
@@ -15,15 +15,38 @@ import { authApi, clearDevice } from "./lib/api.js";
 import { useHousehold } from "./lib/useHousehold.js";
 import { seasonalTheme } from "./lib/theme.js";
 import { isMobile, isStandalone } from "./lib/platform.js";
-import { nyNow } from "./lib/dates.js";
+import { useToday } from "./lib/dates.js";
 import { buildMonth, summarize } from "./lib/billing.js";
 import { getItem, setItem } from "./lib/storage.js";
 import { VERSION } from "./config.js";
 import { getDemo } from "./lib/demo.js";
 const DEMO = import.meta.env.DEV && location.search.includes("demo");
 
-const push = { initial: { opacity: 0, x: 40 }, animate: { opacity: 1, x: 0 }, exit: { opacity: 0, x: -40 } };
-const pop = { initial: { opacity: 0, x: -40 }, animate: { opacity: 1, x: 0 }, exit: { opacity: 0, x: 40 } };
+// A screen that is animating away stops receiving taps immediately and sits underneath the new one,
+// so a slow or interrupted exit animation can never block the screen you're on.
+const screenMotion = {
+  enter: (d) => ({ opacity: 0, x: 36 * d }),
+  center: { opacity: 1, x: 0, transition: { type: "spring", stiffness: 380, damping: 38, mass: 0.9 } },
+  exit: (d) => ({ opacity: 0, x: -36 * d, transition: { duration: 0.2, ease: [0.4, 0, 1, 1] } }),
+};
+function Screen({ dir, children }) {
+  const isPresent = useIsPresent();
+  return (
+    <motion.main
+      className="screen"
+      variants={screenMotion}
+      custom={dir}
+      initial="enter"
+      animate="center"
+      exit="exit"
+      style={{ pointerEvents: isPresent ? "auto" : "none", zIndex: isPresent ? 2 : 1 }}
+      aria-hidden={!isPresent || undefined}
+      {...(!isPresent ? { inert: "" } : {})}
+    >
+      {children}
+    </motion.main>
+  );
+}
 
 function useAutoLock(active, minutes, onLock) {
   useEffect(() => {
@@ -53,6 +76,7 @@ export default function App() {
   const [toastMsg, setToastMsg] = useState(null);
   const [seen, setSeen] = useState(() => getItem("ea.seenVersion"));
   const hh = useHousehold(session);
+  const today = useToday();
 
   const toast = useCallback((text, tone) => {
     const id = Date.now() + Math.random();
@@ -85,13 +109,12 @@ export default function App() {
     await supabase.auth.signOut();
     setScreen("home");
   };
-  const go = (next, d = 1) => { setDir(d); setScreen(next); };
+  const go = (next, d = 1) => { if (next === screen) return; setDir(d); setScreen(next); };
 
   const summary = useMemo(() => {
-    if (!hh.me || hh.loading) return null;
-    const t = nyNow();
-    return summarize(buildMonth(hh.bills.filter((b) => b.owner_id === hh.me.id), hh.periodsByKey, t.y, t.m, t, hh.me.remind_days));
-  }, [hh.me, hh.bills, hh.periodsByKey, hh.loading]);
+    if (!hh.me || (hh.loading && !hh.bills.length)) return null;
+    return summarize(buildMonth(hh.bills.filter((b) => b.owner_id === hh.me.id), hh.periodsByKey, today.y, today.m, today, hh.me.remind_days));
+  }, [hh.me, hh.bills, hh.periodsByKey, hh.loading, today]);
 
   if (gated) return (<><Background theme={theme} /><InstallGate /></>);
 
@@ -105,7 +128,7 @@ export default function App() {
         <LayoutGroup>
           <AnimatePresence initial={false} custom={dir}>
             {screen === "home" && (
-              <motion.main key="home" className="screen" {...(dir > 0 ? pop : pop)} transition={{ duration: 0.28 }}>
+              <Screen key="home" dir={dir}>
                 {session === undefined || (session && hh.loading && !hh.me) ? (
                   <div className="welcome"><div className="spin" /></div>
                 ) : signedIn ? (
@@ -113,17 +136,17 @@ export default function App() {
                 ) : (
                   <Welcome theme={theme} onSignIn={() => setSignIn(true)} />
                 )}
-              </motion.main>
+              </Screen>
             )}
             {screen === "bills" && signedIn && (
-              <motion.main key="bills" className="screen" {...push} transition={{ duration: 0.28 }}>
-                <Bills hh={hh} toast={toast} onBack={() => go("home", -1)} />
-              </motion.main>
+              <Screen key="bills" dir={dir}>
+                <Bills hh={hh} toast={toast} today={today} onBack={() => go("home", -1)} />
+              </Screen>
             )}
             {screen === "settings" && signedIn && (
-              <motion.main key="settings" className="screen" {...push} transition={{ duration: 0.28 }}>
+              <Screen key="settings" dir={dir}>
                 <Settings hh={hh} toast={toast} onBack={() => go("home", -1)} onShowChangelog={openLog} />
-              </motion.main>
+              </Screen>
             )}
           </AnimatePresence>
         </LayoutGroup>
@@ -142,7 +165,7 @@ export default function App() {
       )}
 
       <AnimatePresence>
-        {signIn && !signedIn && <SignIn key="signin" onClose={() => setSignIn(false)} onSignedIn={() => { setSignIn(false); setLocked(false); }} />}
+        {signIn && !signedIn && <SignIn key="signin" onClose={() => setSignIn(false)} onSignedIn={() => { setSignIn(false); setLocked(false); setScreen("home"); }} />}
         {showLog && <Changelog key="log" onClose={() => setShowLog(false)} />}
         {locked && signedIn && (
           <LockScreen key="lock" name={hh.me?.display_name} onUnlocked={() => setLocked(false)} onSignOut={signOut}

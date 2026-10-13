@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 export const TZ = "America/New_York";
 
 export function nyNow() {
@@ -40,4 +41,20 @@ export function greeting() {
   if (h < 12) return "Good morning";
   if (h < 17) return "Good afternoon";
   return "Good evening";
+}
+
+// Today's date in New York, re-checked every 30 seconds and whenever the app comes back,
+// so due dates and totals roll over at midnight without a reload.
+export function useToday() {
+  const [today, setToday] = useState(nyNow);
+  useEffect(() => {
+    const tick = () => setToday((prev) => {
+      const n = nyNow();
+      return n.y !== prev.y || n.m !== prev.m || n.d !== prev.d ? n : prev;
+    });
+    const id = setInterval(tick, 30000);
+    document.addEventListener("visibilitychange", tick);
+    return () => { clearInterval(id); document.removeEventListener("visibilitychange", tick); };
+  }, []);
+  return today;
 }

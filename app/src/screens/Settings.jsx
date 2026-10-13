@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { AnimatePresence } from "framer-motion";
-import { ChevronLeft, ChevronRight, BellRing, KeyRound, Smartphone, Info, Sparkles } from "lucide-react";
+import { ChevronLeft, ChevronRight, BellRing, KeyRound, Smartphone, Info, Sparkles, Volume2 } from "lucide-react";
 import Toggle from "../components/Toggle.jsx";
 import Segmented from "../components/Segmented.jsx";
 import Sheet from "../components/Sheet.jsx";
@@ -10,6 +10,7 @@ import { authApi, getDevice, clearDevice, notifyApi } from "../lib/api.js";
 import { enablePush, disablePushHere, currentSubscription, pushBlocker } from "../lib/push.js";
 import { shortDate, isoToNyDate } from "../lib/dates.js";
 import { VERSION } from "../config.js";
+import { soundsEnabled, setSoundsEnabled, play } from "../lib/feedback.js";
 
 export default function Settings({ hh, onBack, toast, onShowChangelog }) {
   const me = hh.me;
@@ -18,6 +19,7 @@ export default function Settings({ hh, onBack, toast, onShowChangelog }) {
   const [devices, setDevices] = useState(null);
   const [confirmId, setConfirmId] = useState(null);
   const [pinOpen, setPinOpen] = useState(false);
+  const [sounds, setSounds] = useState(soundsEnabled());
   const thisDevice = getDevice()?.id;
   const blocker = pushBlocker();
 
@@ -98,6 +100,17 @@ export default function Settings({ hh, onBack, toast, onShowChangelog }) {
       <p className="field-note">
         {blocker && !on ? blocker : "Reminders come at 8 AM: before a bill is due, on the due date, and each day it's late. Only your own bills remind you."}
       </p>
+
+      <h2 className="section-h"><span>Feel</span></h2>
+      <div className="group">
+        <div className="row">
+          <Volume2 size={20} color="var(--accent)" />
+          <span style={{ flex: 1 }}>Sounds and haptics</span>
+          <Toggle checked={sounds} label="Sounds and haptics"
+            onChange={(v) => { setSoundsEnabled(v); setSounds(v); if (v) setTimeout(() => play("toggleOn"), 30); }} />
+        </div>
+      </div>
+      <p className="field-note">Soft clicks and taps on this device. They follow your phone's silent switch.</p>
 
       <h2 className="section-h"><span>Security</span></h2>
       <div className="group">

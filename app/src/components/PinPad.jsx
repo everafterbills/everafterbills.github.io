@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { motion, useAnimationControls } from "framer-motion";
 import { Delete } from "lucide-react";
+import { play } from "../lib/feedback.js";
 
 const KEYS = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "", "0", "del"];
 
@@ -49,7 +50,7 @@ export default function PinPad({ title, subtitle, onSubmit, footer, autoFocusKey
       if (!r.ok) {
         setMsg(r.message || "That didn't work. Try again.");
         if (r.lockedUntil) { setLockedUntil(new Date(r.lockedUntil).getTime()); setNow(Date.now()); }
-        navigator.vibrate?.(80);
+        play("error");
         shake.start({ x: [0, -16, 14, -10, 6, 0], transition: { duration: 0.42 } });
         setPin("");
       }

@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { ReceiptText, Settings as SettingsIcon, ChevronRight, LogIn } from "lucide-react";
 import { Mark, Wordmark } from "../components/Logo.jsx";
 import { greeting } from "../lib/dates.js";
-import { money } from "../lib/billing.js";
+import AnimatedNumber from "../components/AnimatedNumber.jsx";
 
 export function Welcome({ theme, onSignIn }) {
   return (
@@ -36,7 +36,7 @@ export function HomeMenu({ me, summary, theme, onBills, onSettings, onSignOut })
         <p className="hello-sum">
           {summary == null ? " " : summary.open === 0
             ? "Everything's paid this month."
-            : <>You have <span className="num">{money(summary.left)}</span> left to pay this month.</>}
+            : <>You have <AnimatedNumber value={summary.left} /> left to pay this month.</>}
         </p>
         <nav className="panel glass" aria-label="Main menu">
           <button className="menu-row" onClick={onBills}>

@@ -1,11 +1,12 @@
 import { useEffect, useRef } from "react";
-import { motion, useDragControls } from "framer-motion";
+import { motion, useDragControls, useIsPresent } from "framer-motion";
 import { X } from "lucide-react";
 
 // Bottom sheet on phones, centered dialog on wide screens. Swipe down or tap outside to close.
 export default function Sheet({ title, onClose, children, actions, dismissible = true, label }) {
   const controls = useDragControls();
   const ref = useRef(null);
+  const isPresent = useIsPresent();
   useEffect(() => {
     const onKey = (e) => { if (e.key === "Escape" && dismissible) onClose?.(); };
     window.addEventListener("keydown", onKey);
@@ -14,7 +15,8 @@ export default function Sheet({ title, onClose, children, actions, dismissible =
   }, [onClose, dismissible]);
 
   return (
-    <motion.div className="sheet-wrap" initial={{ opacity: 1 }} exit={{ opacity: 1 }}>
+    <motion.div className="sheet-wrap" initial={{ opacity: 1 }} exit={{ opacity: 1 }}
+      style={{ pointerEvents: isPresent ? "auto" : "none" }} {...(!isPresent ? { inert: "" } : {})}>
       <motion.div className="sheet-scrim" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
         transition={{ duration: 0.25 }} onClick={() => dismissible && onClose?.()} />
       <motion.div
@@ -26,7 +28,7 @@ export default function Sheet({ title, onClose, children, actions, dismissible =
         initial={{ y: "100%" }}
         animate={{ y: 0 }}
         exit={{ y: "100%" }}
-        transition={{ type: "spring", stiffness: 320, damping: 34 }}
+        transition={{ type: "spring", stiffness: 340, damping: 36, mass: 0.9 }}
         drag={dismissible ? "y" : false}
         dragControls={controls}
         dragListener={false}

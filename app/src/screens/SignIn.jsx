@@ -6,6 +6,7 @@ import PinPad from "../components/PinPad.jsx";
 import { authApi, saveDevice, clearDevice } from "../lib/api.js";
 import { deviceLabel } from "../lib/platform.js";
 import { setItem } from "../lib/storage.js";
+import { play } from "../lib/feedback.js";
 
 const fade = { initial: { opacity: 0, x: 24 }, animate: { opacity: 1, x: 0 }, exit: { opacity: 0, x: -24 }, transition: { duration: 0.22 } };
 
@@ -34,7 +35,7 @@ export default function SignIn({ onClose, onSignedIn }) {
 
   const login = async (pin) => {
     const r = await authApi.login(pin);
-    if (r.ok) { setItem("ea.lastSeen", Date.now()); onSignedIn(r); return { ok: true }; }
+    if (r.ok) { setItem("ea.lastSeen", Date.now()); play("success"); onSignedIn(r); return { ok: true }; }
     if (r.error === "untrusted" || r.error === "revoked") {
       clearDevice();
       setNote(r.error === "revoked" ? "This device was removed after too many wrong PINs. Enter your household key to set it up again." : "");

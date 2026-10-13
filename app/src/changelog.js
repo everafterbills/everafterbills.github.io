@@ -1,6 +1,18 @@
 // Newest first. Add a new entry (and bump VERSION in config.js) with every release.
 export const CHANGELOG = [
   {
+    version: "1.1.0",
+    date: "October 12, 2026",
+    title: "Smoother and snappier",
+    items: [
+      "Buttons always respond now, even right after switching screens.",
+      "Soft click sounds and light haptic taps, with a gentle pulse wherever you tap. Turn them off in Settings.",
+      "Totals count smoothly to the exact amount, and bills glide into Paid after you check them off.",
+      "Changes from either phone show up live, and due dates roll over at midnight on their own.",
+      "Every screen adapts from small iPhones to tablets, and Bills gets a two-column view on a computer.",
+    ],
+  },
+  {
     version: "1.0.0",
     date: "October 12, 2026",
     title: "Ever After is here",
