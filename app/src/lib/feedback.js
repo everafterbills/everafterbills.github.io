@@ -23,7 +23,10 @@ function audio(create = true) {
     ctx = new AC({ latencyHint: "interactive" });
     out = ctx.createGain();
     out.gain.value = 0.85;
+    // Only a safety limiter: the default compressor settings would squash the click transients.
     const comp = ctx.createDynamicsCompressor();
+    comp.threshold.value = -4; comp.knee.value = 4; comp.ratio.value = 8;
+    comp.attack.value = 0.001; comp.release.value = 0.06;
     out.connect(comp);
     comp.connect(ctx.destination);
   }
@@ -31,7 +34,7 @@ function audio(create = true) {
   return ctx;
 }
 
-function tone({ f0, f1 = f0, dur = 0.05, type = "sine", gain = 0.04, delay = 0, attack = 0.004 }) {
+function tone({ f0, f1 = f0, dur = 0.05, type = "sine", gain = 0.04, delay = 0, attack = 0.003 }) {
   const c = audio();
   if (!c || c.state !== "running") return;
   const t = c.currentTime + 0.002 + delay;
@@ -46,14 +49,40 @@ function tone({ f0, f1 = f0, dur = 0.05, type = "sine", gain = 0.04, delay = 0, 
   o.start(t); o.stop(t + dur + 0.03);
 }
 
+// A tiny burst of filtered noise: the crisp "tick" at the front of a modern UI click.
+let noiseBuf = null;
+function tick({ freq = 3600, q = 1.4, dur = 0.012, gain = 0.2, delay = 0 }) {
+  const c = audio();
+  if (!c || c.state !== "running") return;
+  if (!noiseBuf) {
+    noiseBuf = c.createBuffer(1, Math.ceil(c.sampleRate * 0.05), c.sampleRate);
+    const d = noiseBuf.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+  }
+  const t = c.currentTime + 0.002 + delay;
+  const src = c.createBufferSource(), bp = c.createBiquadFilter(), g = c.createGain();
+  src.buffer = noiseBuf;
+  bp.type = "bandpass"; bp.frequency.value = freq; bp.Q.value = q;
+  g.gain.setValueAtTime(gain, t);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  src.connect(bp); bp.connect(g); g.connect(out);
+  src.start(t); src.stop(t + dur + 0.02);
+}
+
 const SOUNDS = {
-  tap: () => { tone({ f0: 1700, f1: 900, dur: 0.04, gain: 0.09 }); tone({ f0: 3400, f1: 2400, dur: 0.012, gain: 0.025 }); },
-  key: () => { tone({ f0: 720, f1: 470, dur: 0.07, type: "triangle", gain: 0.13 }); tone({ f0: 2600, f1: 1800, dur: 0.01, gain: 0.03 }); },
-  toggleOn: () => { tone({ f0: 880, dur: 0.06, gain: 0.08 }); tone({ f0: 1320, dur: 0.09, gain: 0.07, delay: 0.05 }); },
-  toggleOff: () => tone({ f0: 760, f1: 520, dur: 0.09, gain: 0.08 }),
-  paid: () => [784, 988, 1319].forEach((f, i) => tone({ f0: f, dur: 0.2, gain: 0.08, delay: i * 0.055 })),
-  success: () => [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => tone({ f0: f, dur: 0.26, gain: 0.07, delay: i * 0.07 })),
-  error: () => { tone({ f0: 230, f1: 160, dur: 0.12, type: "triangle", gain: 0.14 }); tone({ f0: 210, f1: 150, dur: 0.13, type: "triangle", gain: 0.11, delay: 0.13 }); },
+  // Buttons: a light, glassy tick.
+  tap: () => { tick({ freq: 3200, dur: 0.01, gain: 0.16 }); tone({ f0: 1250, f1: 820, dur: 0.022, gain: 0.05 }); },
+  // PIN digits: crisp and short, like a premium keyboard.
+  key: () => { tick({ freq: 4200, q: 1.1, dur: 0.009, gain: 0.26 }); tone({ f0: 1580, f1: 1060, dur: 0.028, gain: 0.07 }); },
+  del: () => { tick({ freq: 2600, q: 1.1, dur: 0.01, gain: 0.22 }); tone({ f0: 980, f1: 700, dur: 0.03, gain: 0.07 }); },
+  toggleOn: () => { tick({ freq: 3400, dur: 0.008, gain: 0.12 }); tone({ f0: 990, dur: 0.05, gain: 0.06 }); tone({ f0: 1485, dur: 0.07, gain: 0.055, delay: 0.045 }); },
+  toggleOff: () => { tick({ freq: 2800, dur: 0.008, gain: 0.12 }); tone({ f0: 1100, f1: 760, dur: 0.07, gain: 0.06 }); },
+  // Paid: a quick bright sparkle that resolves upward.
+  paid: () => { tick({ freq: 5200, dur: 0.012, gain: 0.1 }); [1318.5, 1760, 2637].forEach((f, i) => tone({ f0: f, dur: 0.16, gain: 0.055, delay: 0.02 + i * 0.05 })); },
+  // Signed in: a clean two-note chime.
+  success: () => { tone({ f0: 1046.5, dur: 0.22, gain: 0.06, attack: 0.006 }); tone({ f0: 2093, dur: 0.22, gain: 0.018, attack: 0.006 }); tone({ f0: 1568, dur: 0.3, gain: 0.06, delay: 0.09, attack: 0.006 }); },
+  // Wrong PIN: two soft, low taps (no buzzer).
+  error: () => { tone({ f0: 330, f1: 250, dur: 0.07, gain: 0.12 }); tone({ f0: 300, f1: 220, dur: 0.08, gain: 0.1, delay: 0.1 }); },
 };
 export function play(name = "tap") { try { SOUNDS[name]?.(); } catch { /* never let audio break the UI */ } }
 
@@ -121,9 +150,28 @@ export function initFeedback() {
     const t = e.target instanceof Element ? e.target.closest(TARGET) : null;
     if (!t) return;
     const host = t.closest("[data-pulse-host]") || t;
-    pulse(host, e.clientX, e.clientY);
     const s = t.dataset.sound || (t.classList.contains("key") ? "none" : "tap");
-    if (s !== "none") play(s);
+    const x = e.clientX, y = e.clientY;
+    const fire = () => { pulse(host, x, y); if (s !== "none") play(s); };
+    if (e.pointerType === "mouse" || t.classList.contains("key")) { fire(); return; }
+
+    // A touch might be the start of a swipe. Wait a beat (or for the finger to lift) so swiping
+    // never clicks or ripples. PIN keys skip this and respond on touch-down.
+    let timer = 0;
+    const cleanup = () => {
+      clearTimeout(timer);
+      window.removeEventListener("pointermove", onMove, true);
+      window.removeEventListener("pointerup", onUp, true);
+      window.removeEventListener("pointercancel", cleanup, true);
+      window.removeEventListener("scroll", cleanup, true);
+    };
+    const onMove = (ev) => { if (Math.hypot(ev.clientX - x, ev.clientY - y) > 9) cleanup(); };
+    const onUp = () => { cleanup(); fire(); };
+    timer = setTimeout(() => { cleanup(); fire(); }, 85);
+    window.addEventListener("pointermove", onMove, true);
+    window.addEventListener("pointerup", onUp, true);
+    window.addEventListener("pointercancel", cleanup, true);
+    window.addEventListener("scroll", cleanup, true);
   }, { passive: true });
 
   document.addEventListener("click", (e) => {

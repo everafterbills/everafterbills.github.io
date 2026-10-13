@@ -23,7 +23,8 @@
   --font-num: ui-rounded, "SF Pro Rounded", -apple-system, BlinkMacSystemFont, system-ui, "Segoe UI", sans-serif;
   --font-brand: "Fraunces Variable", "Iowan Old Style", Georgia, serif;
   --safe-t: env(safe-area-inset-top, 0px);
-  --safe-b: max(0px, calc(env(safe-area-inset-bottom, 0px) - var(--ios-gap, 0px)));
+  /* Measured in lib/viewport.js: how much of the bottom edge to keep clear on this layout. */
+  --safe-b: var(--bottom-guard, env(safe-area-inset-bottom, 0px));
   --safe-l: env(safe-area-inset-left, 0px);
   --safe-r: env(safe-area-inset-right, 0px);
   color-scheme: dark;
@@ -32,7 +33,9 @@
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 button, a, .key, [role="switch"] { touch-action: manipulation; }
 html, body, #root { height: 100%; }
-html { background: var(--bg-0); }
+html { background: var(--bg-0); overscroll-behavior: none; }
+/* The installed app never scrolls as a page; only its screens and sheets scroll, so nothing drags the whole app. */
+html.app-mode, html.app-mode body { overflow: hidden; overscroll-behavior: none; }
 body {
   margin: 0;
   font-family: var(--font-ui);
@@ -55,21 +58,21 @@ button:disabled { cursor: default; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
 /* ───────── Background ───────── */
-.backdrop { position: fixed; inset: 0; z-index: 0; overflow: hidden; background: linear-gradient(160deg, var(--bg-1) 0%, var(--bg-0) 55%, #170f26 100%); }
+.backdrop { position: fixed; top: -12vh; bottom: -30vh; left: 0; right: 0; z-index: 0; overflow: hidden; background: linear-gradient(160deg, var(--bg-1) 0%, var(--bg-0) 52%, var(--bg-0) 100%); }
 .aurora { position: absolute; width: 90vmax; height: 90vmax; border-radius: 50%; opacity: 0.5; will-change: transform; }
-.aurora.a1 { top: -38vmax; left: -30vmax; animation: drift1 38s ease-in-out infinite alternate; }
-.aurora.a2 { bottom: -45vmax; right: -35vmax; opacity: 0.38; animation: drift2 46s ease-in-out infinite alternate; }
-.aurora.a3 { top: 30%; left: 35%; width: 60vmax; height: 60vmax; opacity: 0.22; animation: drift3 52s ease-in-out infinite alternate; }
+.aurora.a1 { top: calc(12vh - 38vmax); left: -30vmax; animation: drift1 38s ease-in-out infinite alternate; }
+.aurora.a2 { top: calc(12vh + 18vh); right: -52vmax; opacity: 0.34; animation: drift2 46s ease-in-out infinite alternate; }
+.aurora.a3 { top: calc(12vh + 14vh); left: 30%; width: 60vmax; height: 60vmax; opacity: 0.22; animation: drift3 52s ease-in-out infinite alternate; }
 @keyframes drift1 { to { transform: translate3d(14vmax, 10vmax, 0) scale(1.12); } }
 @keyframes drift2 { to { transform: translate3d(-12vmax, -8vmax, 0) scale(1.08); } }
 @keyframes drift3 { to { transform: translate3d(-18vmax, 6vmax, 0) scale(0.9); } }
 .grain { position: absolute; inset: 0; opacity: 0.06; mix-blend-mode: overlay; background-image: radial-gradient(rgba(255,255,255,.7) 0.5px, transparent 0.6px); background-size: 3px 3px; }
-.particles { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.particles { position: absolute; top: 12vh; left: 0; width: 100%; height: calc(100% - 42vh); pointer-events: none; }
 
 /* ───────── Layout ───────── */
 .app { position: relative; z-index: 1; min-height: 100%; }
 .screen {
-  position: absolute; inset: 0; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch;
+  position: absolute; inset: 0; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
   padding: calc(var(--safe-t) + 14px) calc(var(--safe-r) + 18px) calc(var(--safe-b) + 40px) calc(var(--safe-l) + 18px);
 }
 .column { width: 100%; max-width: 620px; margin: 0 auto; }
@@ -123,14 +126,14 @@ button:disabled { cursor: default; }
 .hello-sum .num { color: var(--accent); }
 .menu-row { display: flex; align-items: center; gap: 14px; width: 100%; padding: 17px 18px; text-align: left; transition: background .2s; }
 .menu-row + .menu-row { border-top: 1px solid var(--stroke-soft); }
-.menu-row:active { background: rgba(255,255,255,.06); }
+.menu-row:active { background: rgba(255,255,255,.06); transition-delay: .07s; }
 .menu-row .ic { width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center; background: rgba(255,255,255,.09); color: var(--accent); flex: none; }
 .menu-row .lbl { flex: 1; font-size: 18px; font-weight: 600; }
 .menu-row .meta { color: var(--text-3); font-size: 15px; }
 .quiet-btn { display: block; margin: 22px auto 0; padding: 12px 22px; color: var(--text-2); font-size: 16px; border-radius: 999px; }
 .quiet-btn:active { background: rgba(255,255,255,.06); }
 
-.corner { position: fixed; left: calc(var(--safe-l) + 16px); bottom: calc(var(--safe-b) + 12px); z-index: 5; display: flex; align-items: center; gap: 8px; }
+.corner { position: fixed; left: calc(var(--safe-l) + 16px); bottom: calc(var(--safe-b) + 12px); z-index: 7; display: flex; align-items: center; gap: 8px; }
 .version { font-size: 12px; color: var(--text-3); font-family: var(--font-num); letter-spacing: 0.02em; }
 .bell { position: relative; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; color: var(--text-2); }
 .bell .dot { position: absolute; top: 6px; right: 7px; width: 8px; height: 8px; border-radius: 50%; background: var(--blush); box-shadow: 0 0 0 2px var(--bg-0); }
@@ -209,7 +212,7 @@ a.btn-primary { color: #2a1530; }
 
 /* ───────── Sheets ───────── */
 .sheet-wrap { position: fixed; inset: 0; z-index: 40; display: flex; align-items: flex-end; justify-content: center; }
-.sheet-scrim { position: absolute; inset: 0; background: rgba(10, 4, 20, 0.55); }
+.sheet-scrim { position: absolute; top: -12vh; bottom: -30vh; left: 0; right: 0; background: rgba(10, 4, 20, 0.55); }
 .sheet {
   position: relative; width: 100%; max-width: 640px; max-height: calc(100dvh - var(--safe-t) - 18px);
   border-radius: 30px 30px 0 0; display: flex; flex-direction: column;
@@ -218,14 +221,19 @@ a.btn-primary { color: #2a1530; }
   box-shadow: inset 0 1px 0 rgba(255,255,255,.14), 0 -20px 60px rgba(5, 2, 12, 0.5);
   -webkit-backdrop-filter: blur(30px) saturate(170%); backdrop-filter: blur(30px) saturate(170%);
 }
-.sheet .grab { padding: 10px 0 4px; display: grid; place-items: center; touch-action: none; cursor: grab; }
+/* The sheet's color continues below its edge, so a bounce or spring never shows a gap underneath. */
+.sheet::after { content: ""; position: absolute; left: -1px; right: -1px; top: calc(100% - 1px); height: 40vh; pointer-events: none;
+  background: rgb(35, 23, 53); border-left: 1px solid var(--stroke); border-right: 1px solid var(--stroke); }
+.sheet-top { touch-action: none; flex: none; }
+.sheet .grab { padding: 10px 0 4px; display: grid; place-items: center; cursor: grab; }
 .sheet .grab span { width: 38px; height: 5px; border-radius: 3px; background: rgba(255,255,255,.28); }
 .sheet .sheet-head { display: flex; align-items: center; gap: 10px; padding: 4px 18px 10px; }
 .sheet .sheet-head h2 { flex: 1; margin: 0; font-size: 20px; font-weight: 650; }
-.sheet .body { overflow-y: auto; padding: 4px 18px calc(var(--safe-b) + 24px); -webkit-overflow-scrolling: touch; }
+.sheet .body { overflow-y: auto; overscroll-behavior: contain; padding: 4px 18px calc(var(--safe-b) + 24px); -webkit-overflow-scrolling: touch; }
 @media (min-width: 760px) {
   .sheet-wrap { align-items: center; }
   .sheet { border-radius: 30px; border-bottom: 1px solid var(--stroke); max-height: 86vh; }
+  .sheet::after { display: none; }
   .sheet .body { padding-bottom: 26px; }
 }
 
@@ -341,7 +349,7 @@ a.btn-primary { color: #2a1530; }
 .btn-primary .tap-pulse { background: radial-gradient(circle, rgba(255,255,255,.55) 0%, rgba(255,255,255,.2) 40%, rgba(255,255,255,0) 68%); }
 @keyframes tap-pulse { 0% { transform: translate(-50%, -50%) scale(0); opacity: .95; } 60% { opacity: .55; } 100% { transform: translate(-50%, -50%) scale(1); opacity: 0; } }
 .menu-row, .bill, .group button.row, .release-head, .banner { transition: transform .18s cubic-bezier(.2,.7,.3,1), background .2s; }
-.menu-row:active, .bill:active, .group button.row:active, .release-head:active, .banner:active { transform: scale(0.985); }
+.menu-row:active, .bill:active, .group button.row:active, .release-head:active, .banner:active { transform: scale(0.985); transition-delay: .07s; }
 .icon-btn, .mini-btn, .check, .bell { transition: transform .16s cubic-bezier(.2,.7,.3,1); }
 .icon-btn:active, .mini-btn:active, .bell:active { transform: scale(0.92); }
 .segmented button:active > span:last-child { transform: scale(.96); }
@@ -398,7 +406,7 @@ a.btn-primary { color: #2a1530; }
 
 /* iOS 26 home-screen apps reserve a strip at the bottom that pages can't draw into.
    The background fades into the same color iOS paints there, so the edge disappears. */
-.backdrop::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 26%; pointer-events: none;
-  background: linear-gradient(to bottom, rgba(30, 20, 48, 0) 0%, rgba(30, 20, 48, .85) 70%, #1e1430 100%); }
-.edge-fade { position: fixed; left: 0; right: 0; bottom: 0; height: 22px; z-index: 6; pointer-events: none;
-  background: linear-gradient(to bottom, rgba(30, 20, 48, 0), #1e1430); }
+.backdrop::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: calc(30vh + 26vh); pointer-events: none;
+  background: linear-gradient(to bottom, rgba(30, 20, 48, 0) 0, rgba(30, 20, 48, .85) 18vh, #1e1430 26vh); }
+.edge-fade { position: fixed; left: 0; right: 0; bottom: -30vh; height: calc(30vh + var(--safe-b) + 20px); z-index: 6; pointer-events: none;
+  background: linear-gradient(to bottom, rgba(30, 20, 48, 0) 0, rgba(30, 20, 48, .9) calc(var(--safe-b) * .5 + 16px), #1e1430 calc(var(--safe-b) + 20px)); }

@@ -1,6 +1,19 @@
 // Newest first. Add a new entry (and bump VERSION in config.js) with every release.
 export const CHANGELOG = [
   {
+    version: "1.3.0",
+    date: "October 12, 2026",
+    title: "Steadier screens and a crisper keypad",
+    items: [
+      "The app checks how iOS is laying out the bottom of the screen every time it changes, so nothing hides behind the bottom strip.",
+      "Sign-in and the other pop-ups sit at the same comfortable height on every layout.",
+      "Swiping no longer drags the whole app; lists and pop-ups bounce on their own.",
+      "Pull any pop-up down from anywhere to close it once its content is at the top.",
+      "Scrolling a list no longer clicks or ripples the row your finger started on.",
+      "New keypad and button sounds: short, crisp ticks instead of beeps.",
+    ],
+  },
+  {
     version: "1.2.0",
     date: "October 12, 2026",
     title: "Faster PIN pad and clearer sounds",

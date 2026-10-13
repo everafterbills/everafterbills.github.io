@@ -17,7 +17,7 @@ export default function LockScreen({ name, onUnlocked, onSignOut, onUntrusted })
     return { ok: false, ...pinError(r) };
   };
   return (
-    <motion.div className="sheet-wrap" style={{ alignItems: "center", zIndex: 50, pointerEvents: isPresent ? "auto" : "none" }} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+    <motion.div className="sheet-wrap" style={{ alignItems: "center", zIndex: 50, paddingTop: "var(--safe-t)", paddingBottom: "var(--safe-b)", pointerEvents: isPresent ? "auto" : "none" }} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
       <div className="sheet-scrim" style={{ background: "rgba(14,7,26,.72)", backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)" }} />
       <div style={{ position: "relative", padding: "0 20px" }}>
         <img src="/icons/mark.svg" alt="" style={{ width: 54, height: 54, display: "block", margin: "0 auto 4px" }} />

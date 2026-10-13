@@ -25,7 +25,7 @@ export default function PinPad({ title, subtitle, onSubmit, footer, autoFocusKey
   const press = useCallback((k) => {
     if (busy || locked) return;
     setMsg("");
-    play("key");
+    play(k === "del" ? "del" : "key");
     if (k === "del") setPin((p) => p.slice(0, -1));
     else setPin((p) => (p.length < 6 ? p + k : p));
   }, [busy, locked]);
