@@ -348,7 +348,7 @@ begin
     and m.owner_id = case s.owner_slug when 'nick' then p_nick_uid else p_courtney_uid end
   where s.username_enc is not null;
 
-  delete from private.seed_bills;
+  delete from private.seed_bills where true;
 
   v_dev := private.new_device(p_label);
   return jsonb_build_object('ok', true) || v_dev;
