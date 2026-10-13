@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#5A2E5E"/><stop offset="0.55" stop-color="#36203F"/><stop offset="1" stop-color="#1B1229"/>
+    </linearGradient>
+    <radialGradient id="halo" cx="0.5" cy="0.42" r="0.5">
+      <stop offset="0" stop-color="#F2A7B8" stop-opacity="0.38"/><stop offset="1" stop-color="#F2A7B8" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="64" height="64" fill="url(#bg)"/>
+  <rect width="64" height="64" fill="url(#halo)"/>
+  <g transform="translate(7.68 8.32) scale(0.2432)">
+  <defs>
+    <linearGradient id="i-blush" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#FFD3DD"/><stop offset="1" stop-color="#EE8FA6"/>
+    </linearGradient>
+    <linearGradient id="i-gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#FFF0C9"/><stop offset="0.55" stop-color="#EBCB8B"/><stop offset="1" stop-color="#C99A4E"/>
+    </linearGradient>
+    <filter id="i-glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="5" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="i-shadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="1.5" stdDeviation="1.6" flood-color="#1A0E26" flood-opacity="0.55"/>
+    </filter>
+  </defs>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round" filter="url(#i-glow)">
+    <circle cx="122" cy="84" r="34" stroke="url(#i-gold)" stroke-width="12"/>
+    <path d="M146.99 107.05 L100 158" stroke="url(#i-gold)" stroke-width="12"/>
+    <g filter="url(#i-shadow)">
+      <circle cx="78" cy="84" r="34" stroke="url(#i-blush)" stroke-width="12"/>
+      <path d="M53.01 107.05 L100 158" stroke="url(#i-blush)" stroke-width="12"/>
+    </g>
+    
+  </g>
+  <path d="M152 34 C153.4 42.6 155.4 44.6 164 46 C155.4 47.4 153.4 49.4 152 58 C150.6 49.4 148.6 47.4 140 46 C148.6 44.6 150.6 42.6 152 34 Z" fill="#FFFFFF" opacity="0.95"/>
+  <circle cx="152" cy="46" r="2.2" fill="#FFFFFF"/></g>
+</svg>
