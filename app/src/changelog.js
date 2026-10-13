@@ -1,6 +1,17 @@
 // Newest first. Add a new entry (and bump VERSION in config.js) with every release.
 export const CHANGELOG = [
   {
+    version: "1.3.1",
+    date: "October 12, 2026",
+    title: "Gentler keypad, higher PIN pad",
+    items: [
+      "The PIN keypad has a soft, rounded tap sound instead of a sharp tick.",
+      "Pick the keypad sound you like in Settings: Soft, Chime (notes that climb with each digit) or Droplet.",
+      "All other sounds are back to how they were in 1.2.0.",
+      "The PIN pad sits higher on the screen when you sign in or change your PIN.",
+    ],
+  },
+  {
     version: "1.3.0",
     date: "October 12, 2026",
     title: "Steadier screens and a crisper keypad",

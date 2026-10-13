@@ -286,6 +286,8 @@ a.btn-primary { color: #2a1530; }
 .dots span.on { background: var(--accent); border-color: var(--accent); }
 .pin .msg { min-height: 40px; font-size: 14.5px; color: var(--coral); max-width: 300px; display: flex; align-items: center; justify-content: center; }
 .pin { --key: clamp(62px, 19.5vw, 80px); }
+/* In a sheet, the keypad sits well above the bottom edge, about where the iPhone passcode keypad sits. */
+.sheet .pin { padding-bottom: clamp(12px, 8vh, 84px); }
 .keys { display: grid; grid-template-columns: repeat(3, var(--key)); gap: calc(var(--key) * 0.2) calc(var(--key) * 0.3); margin-top: 6px; }
 .key { width: var(--key); height: var(--key); border-radius: 50%; font-family: var(--font-num); font-size: calc(var(--key) * 0.41); font-weight: 500; background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.14); box-shadow: inset 0 1px 0 rgba(255,255,255,.12); transition: background .25s ease-out, transform .25s cubic-bezier(.2,.8,.3,1); will-change: transform; }
 .key:active { background: rgba(255,255,255,.34); transform: scale(.93); transition: none; }
@@ -379,6 +381,7 @@ a.btn-primary { color: #2a1530; }
 }
 @media (max-height: 560px) {
   .pin { --key: 50px; }
+  .sheet .pin { padding-bottom: 4px; }
   .pin .msg { min-height: 28px; }
   .welcome .mark { width: 80px; height: 80px; }
   .welcome .wordmark { font-size: 40px; margin-top: 8px; }

@@ -23,10 +23,7 @@ function audio(create = true) {
     ctx = new AC({ latencyHint: "interactive" });
     out = ctx.createGain();
     out.gain.value = 0.85;
-    // Only a safety limiter: the default compressor settings would squash the click transients.
     const comp = ctx.createDynamicsCompressor();
-    comp.threshold.value = -4; comp.knee.value = 4; comp.ratio.value = 8;
-    comp.attack.value = 0.001; comp.release.value = 0.06;
     out.connect(comp);
     comp.connect(ctx.destination);
   }
@@ -34,14 +31,14 @@ function audio(create = true) {
   return ctx;
 }
 
-function tone({ f0, f1 = f0, dur = 0.05, type = "sine", gain = 0.04, delay = 0, attack = 0.003 }) {
+function tone({ f0, f1 = f0, dur = 0.05, type = "sine", gain = 0.04, delay = 0, attack = 0.004, glide = dur }) {
   const c = audio();
   if (!c || c.state !== "running") return;
   const t = c.currentTime + 0.002 + delay;
   const o = c.createOscillator(), g = c.createGain();
   o.type = type;
   o.frequency.setValueAtTime(f0, t);
-  if (f1 !== f0) o.frequency.exponentialRampToValueAtTime(f1, t + dur);
+  if (f1 !== f0) o.frequency.exponentialRampToValueAtTime(f1, t + glide);
   g.gain.setValueAtTime(0.0001, t);
   g.gain.exponentialRampToValueAtTime(gain, t + attack);
   g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
@@ -49,42 +46,47 @@ function tone({ f0, f1 = f0, dur = 0.05, type = "sine", gain = 0.04, delay = 0, 
   o.start(t); o.stop(t + dur + 0.03);
 }
 
-// A tiny burst of filtered noise: the crisp "tick" at the front of a modern UI click.
-let noiseBuf = null;
-function tick({ freq = 3600, q = 1.4, dur = 0.012, gain = 0.2, delay = 0 }) {
-  const c = audio();
-  if (!c || c.state !== "running") return;
-  if (!noiseBuf) {
-    noiseBuf = c.createBuffer(1, Math.ceil(c.sampleRate * 0.05), c.sampleRate);
-    const d = noiseBuf.getChannelData(0);
-    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
-  }
-  const t = c.currentTime + 0.002 + delay;
-  const src = c.createBufferSource(), bp = c.createBiquadFilter(), g = c.createGain();
-  src.buffer = noiseBuf;
-  bp.type = "bandpass"; bp.frequency.value = freq; bp.Q.value = q;
-  g.gain.setValueAtTime(gain, t);
-  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-  src.connect(bp); bp.connect(g); g.connect(out);
-  src.start(t); src.stop(t + dur + 0.02);
-}
+// Keypad voices: short, rounded and hiss-free. Chosen in Settings; "soft" is the default.
+const PENTA = [523.25, 587.33, 659.25, 783.99, 880, 1046.5]; // C D E G A C: each digit steps up
+export const KEYPAD_VOICES = [
+  { value: "soft", label: "Soft" },
+  { value: "chime", label: "Chime" },
+  { value: "droplet", label: "Droplet" },
+];
+const KEY_VOICES = {
+  // A muted marimba tap: a quick pitch settle for definition, then a short warm ring.
+  soft: {
+    key: () => { tone({ f0: 1180, f1: 880, glide: 0.008, dur: 0.055, gain: 0.11, attack: 0.0015 }); tone({ f0: 2430, dur: 0.014, gain: 0.022, attack: 0.001 }); },
+    del: () => { tone({ f0: 960, f1: 720, glide: 0.008, dur: 0.055, gain: 0.1, attack: 0.0015 }); tone({ f0: 1990, dur: 0.014, gain: 0.02, attack: 0.001 }); },
+  },
+  // Little bell notes that climb with each digit, so a full PIN plays a short rising phrase.
+  chime: {
+    key: (n = 1) => { const f = PENTA[Math.min(5, Math.max(0, n - 1))]; tone({ f0: f, dur: 0.14, gain: 0.075, attack: 0.003 }); tone({ f0: f * 4, dur: 0.03, gain: 0.01, attack: 0.002 }); },
+    del: () => tone({ f0: 440, f1: 392, dur: 0.1, gain: 0.06, attack: 0.003 }),
+  },
+  // A soft water-drop bloop.
+  droplet: {
+    key: () => tone({ f0: 560, f1: 1180, glide: 0.022, dur: 0.06, gain: 0.11, attack: 0.002 }),
+    del: () => tone({ f0: 1000, f1: 520, glide: 0.022, dur: 0.06, gain: 0.1, attack: 0.002 }),
+  },
+};
+let keyVoice = getItem("ea.keySound", "soft");
+if (!KEY_VOICES[keyVoice]) keyVoice = "soft";
+export const keypadSound = () => keyVoice;
+export function setKeypadSound(v) { if (KEY_VOICES[v]) { keyVoice = v; setItem("ea.keySound", v); } }
+export function previewKeypad() { [1, 2, 3].forEach((n, i) => setTimeout(() => play("key", n), i * 120)); }
 
 const SOUNDS = {
-  // Buttons: a light, glassy tick.
-  tap: () => { tick({ freq: 3200, dur: 0.01, gain: 0.16 }); tone({ f0: 1250, f1: 820, dur: 0.022, gain: 0.05 }); },
-  // PIN digits: crisp and short, like a premium keyboard.
-  key: () => { tick({ freq: 4200, q: 1.1, dur: 0.009, gain: 0.26 }); tone({ f0: 1580, f1: 1060, dur: 0.028, gain: 0.07 }); },
-  del: () => { tick({ freq: 2600, q: 1.1, dur: 0.01, gain: 0.22 }); tone({ f0: 980, f1: 700, dur: 0.03, gain: 0.07 }); },
-  toggleOn: () => { tick({ freq: 3400, dur: 0.008, gain: 0.12 }); tone({ f0: 990, dur: 0.05, gain: 0.06 }); tone({ f0: 1485, dur: 0.07, gain: 0.055, delay: 0.045 }); },
-  toggleOff: () => { tick({ freq: 2800, dur: 0.008, gain: 0.12 }); tone({ f0: 1100, f1: 760, dur: 0.07, gain: 0.06 }); },
-  // Paid: a quick bright sparkle that resolves upward.
-  paid: () => { tick({ freq: 5200, dur: 0.012, gain: 0.1 }); [1318.5, 1760, 2637].forEach((f, i) => tone({ f0: f, dur: 0.16, gain: 0.055, delay: 0.02 + i * 0.05 })); },
-  // Signed in: a clean two-note chime.
-  success: () => { tone({ f0: 1046.5, dur: 0.22, gain: 0.06, attack: 0.006 }); tone({ f0: 2093, dur: 0.22, gain: 0.018, attack: 0.006 }); tone({ f0: 1568, dur: 0.3, gain: 0.06, delay: 0.09, attack: 0.006 }); },
-  // Wrong PIN: two soft, low taps (no buzzer).
-  error: () => { tone({ f0: 330, f1: 250, dur: 0.07, gain: 0.12 }); tone({ f0: 300, f1: 220, dur: 0.08, gain: 0.1, delay: 0.1 }); },
+  tap: () => { tone({ f0: 1700, f1: 900, dur: 0.04, gain: 0.09 }); tone({ f0: 3400, f1: 2400, dur: 0.012, gain: 0.025 }); },
+  key: (n) => KEY_VOICES[keyVoice].key(n),
+  del: (n) => KEY_VOICES[keyVoice].del(n),
+  toggleOn: () => { tone({ f0: 880, dur: 0.06, gain: 0.08 }); tone({ f0: 1320, dur: 0.09, gain: 0.07, delay: 0.05 }); },
+  toggleOff: () => tone({ f0: 760, f1: 520, dur: 0.09, gain: 0.08 }),
+  paid: () => [784, 988, 1319].forEach((f, i) => tone({ f0: f, dur: 0.2, gain: 0.08, delay: i * 0.055 })),
+  success: () => [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => tone({ f0: f, dur: 0.26, gain: 0.07, delay: i * 0.07 })),
+  error: () => { tone({ f0: 230, f1: 160, dur: 0.12, type: "triangle", gain: 0.14 }); tone({ f0: 210, f1: 150, dur: 0.13, type: "triangle", gain: 0.11, delay: 0.13 }); },
 };
-export function play(name = "tap") { try { SOUNDS[name]?.(); } catch { /* never let audio break the UI */ } }
+export function play(name = "tap", arg) { try { SOUNDS[name]?.(arg); } catch { /* never let audio break the UI */ } }
 
 // iOS Safari has no vibrate(); toggling a hidden native switch gives a light system haptic (iOS 18+).
 let hapticLabel = null;

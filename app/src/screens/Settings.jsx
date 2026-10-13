@@ -10,7 +10,7 @@ import { authApi, getDevice, clearDevice, notifyApi } from "../lib/api.js";
 import { enablePush, disablePushHere, currentSubscription, pushBlocker } from "../lib/push.js";
 import { shortDate, isoToNyDate } from "../lib/dates.js";
 import { VERSION } from "../config.js";
-import { soundsEnabled, setSoundsEnabled, soundsOnSilent, setSoundsOnSilent, play } from "../lib/feedback.js";
+import { soundsEnabled, setSoundsEnabled, soundsOnSilent, setSoundsOnSilent, play, KEYPAD_VOICES, keypadSound, setKeypadSound, previewKeypad } from "../lib/feedback.js";
 import { isIOS } from "../lib/platform.js";
 
 export default function Settings({ hh, onBack, toast, onShowChangelog }) {
@@ -22,6 +22,7 @@ export default function Settings({ hh, onBack, toast, onShowChangelog }) {
   const [pinOpen, setPinOpen] = useState(false);
   const [sounds, setSounds] = useState(soundsEnabled());
   const [onSilent, setOnSilent] = useState(soundsOnSilent());
+  const [keyVoice, setKeyVoice] = useState(keypadSound());
   const thisDevice = getDevice()?.id;
   const blocker = pushBlocker();
 
@@ -111,6 +112,13 @@ export default function Settings({ hh, onBack, toast, onShowChangelog }) {
           <Toggle checked={sounds} label="Sounds and haptics"
             onChange={(v) => { setSoundsEnabled(v); setSounds(v); if (v) setTimeout(() => play("toggleOn"), 30); }} />
         </div>
+        {sounds && (
+          <div className="row" style={{ flexDirection: "column", alignItems: "stretch", gap: 10 }}>
+            <span className="k">PIN keypad sound</span>
+            <Segmented id="keyvoice" value={keyVoice} sound="none" options={KEYPAD_VOICES}
+              onChange={(v) => { setKeypadSound(v); setKeyVoice(v); previewKeypad(); }} />
+          </div>
+        )}
         {sounds && isIOS() && (
           <div className="row">
             <span style={{ flex: 1, paddingLeft: 32 }}>Play sounds when on silent</span>

@@ -1,5 +1,5 @@
 // Ever After service worker: app-shell cache (never caches bill data) + push notifications.
-const CACHE = "ea-shell-1.3.0";
+const CACHE = "ea-shell-1.3.1";
 const SHELL = ["/", "/manifest.webmanifest", "/icons/mark.svg", "/icons/icon-192.png"];
 
 self.addEventListener("install", (event) => {

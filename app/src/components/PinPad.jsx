@@ -22,12 +22,17 @@ export default function PinPad({ title, subtitle, onSubmit, footer, autoFocusKey
     return () => clearInterval(t);
   }, [lockedUntil]);
 
+  const pinRef = useRef("");
+  useEffect(() => { pinRef.current = pin; }, [pin]);
   const press = useCallback((k) => {
     if (busy || locked) return;
     setMsg("");
-    play(k === "del" ? "del" : "key");
-    if (k === "del") setPin((p) => p.slice(0, -1));
-    else setPin((p) => (p.length < 6 ? p + k : p));
+    const cur = pinRef.current;
+    if (k !== "del" && cur.length >= 6) return;
+    const next = k === "del" ? cur.slice(0, -1) : cur + k;
+    pinRef.current = next;
+    play(k === "del" ? "del" : "key", next.length);
+    setPin(next);
   }, [busy, locked]);
 
   // Register on touch-down (no waiting for the finger to lift); click still works for keyboards.
