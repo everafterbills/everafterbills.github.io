@@ -46,47 +46,67 @@ function tone({ f0, f1 = f0, dur = 0.05, type = "sine", gain = 0.04, delay = 0, 
   o.start(t); o.stop(t + dur + 0.03);
 }
 
-// Keypad voices: short, rounded and hiss-free. Chosen in Settings; "soft" is the default.
-const PENTA = [523.25, 587.33, 659.25, 783.99, 880, 1046.5]; // C D E G A C: each digit steps up
-export const KEYPAD_VOICES = [
+// Sound themes. Every UI sound comes in three voices; the chosen theme also styles the tap ripple.
+const mallet = (f, { delay = 0, gain = 0.1, dur = 0.06 } = {}) => {
+  // Muted marimba: a quick pitch settle for definition, then a short warm ring.
+  tone({ f0: f * 1.34, f1: f, glide: 0.008, dur, gain, attack: 0.0015, delay });
+  tone({ f0: f * 2.76, dur: Math.min(0.016, dur), gain: gain * 0.2, attack: 0.001, delay });
+};
+const bell = (f, { delay = 0, gain = 0.075, dur = 0.14 } = {}) => {
+  tone({ f0: f, dur, gain, attack: 0.003, delay });
+  tone({ f0: f * 4, dur: 0.03, gain: gain * 0.13, attack: 0.002, delay });
+};
+const drop = (f, { delay = 0, gain = 0.11, dur = 0.06, down = false } = {}) =>
+  tone({ f0: down ? f * 1.92 : f, f1: down ? f : f * 2.1, glide: 0.022, dur, gain, attack: 0.002, delay });
+
+const PENTA = [523.25, 587.33, 659.25, 783.99, 880, 1046.5]; // C D E G A C: PIN digits climb in Chime
+const ARP = [523.25, 659.25, 783.99, 1046.5];
+
+export const SOUND_THEMES = [
   { value: "soft", label: "Soft" },
   { value: "chime", label: "Chime" },
   { value: "droplet", label: "Droplet" },
 ];
-const KEY_VOICES = {
-  // A muted marimba tap: a quick pitch settle for definition, then a short warm ring.
+const THEMES = {
   soft: {
-    key: () => { tone({ f0: 1180, f1: 880, glide: 0.008, dur: 0.055, gain: 0.11, attack: 0.0015 }); tone({ f0: 2430, dur: 0.014, gain: 0.022, attack: 0.001 }); },
-    del: () => { tone({ f0: 960, f1: 720, glide: 0.008, dur: 0.055, gain: 0.1, attack: 0.0015 }); tone({ f0: 1990, dur: 0.014, gain: 0.02, attack: 0.001 }); },
+    tap: () => mallet(1050, { gain: 0.07, dur: 0.045 }),
+    key: () => mallet(880, { gain: 0.11, dur: 0.055 }),
+    del: () => mallet(720, { gain: 0.1, dur: 0.055 }),
+    toggleOn: () => { mallet(784, { gain: 0.08 }); mallet(1046.5, { gain: 0.08, delay: 0.07 }); },
+    toggleOff: () => { mallet(1046.5, { gain: 0.08 }); mallet(784, { gain: 0.075, delay: 0.07 }); },
+    paid: () => [784, 988, 1318.5].forEach((f, i) => mallet(f, { gain: 0.09, dur: 0.1, delay: i * 0.06 })),
+    success: () => ARP.forEach((f, i) => mallet(f, { gain: 0.09, dur: 0.14, delay: i * 0.075 })),
+    error: () => { mallet(392, { gain: 0.12, dur: 0.08 }); mallet(330, { gain: 0.11, dur: 0.09, delay: 0.12 }); },
   },
-  // Little bell notes that climb with each digit, so a full PIN plays a short rising phrase.
   chime: {
-    key: (n = 1) => { const f = PENTA[Math.min(5, Math.max(0, n - 1))]; tone({ f0: f, dur: 0.14, gain: 0.075, attack: 0.003 }); tone({ f0: f * 4, dur: 0.03, gain: 0.01, attack: 0.002 }); },
+    tap: () => bell(1318.5, { gain: 0.042, dur: 0.08 }),
+    key: (n = 1) => bell(PENTA[Math.min(5, Math.max(0, n - 1))]),
     del: () => tone({ f0: 440, f1: 392, dur: 0.1, gain: 0.06, attack: 0.003 }),
+    toggleOn: () => { bell(784, { gain: 0.06, dur: 0.12 }); bell(1046.5, { gain: 0.06, dur: 0.16, delay: 0.07 }); },
+    toggleOff: () => { bell(1046.5, { gain: 0.06, dur: 0.12 }); bell(784, { gain: 0.055, dur: 0.16, delay: 0.07 }); },
+    paid: () => [1046.5, 1318.5, 1568].forEach((f, i) => bell(f, { gain: 0.065, dur: 0.24, delay: i * 0.06 })),
+    success: () => ARP.forEach((f, i) => bell(f, { gain: 0.07, dur: 0.32, delay: i * 0.08 })),
+    error: () => { bell(659.25, { gain: 0.07, dur: 0.16 }); bell(523.25, { gain: 0.065, dur: 0.22, delay: 0.13 }); },
   },
-  // A soft water-drop bloop.
   droplet: {
-    key: () => tone({ f0: 560, f1: 1180, glide: 0.022, dur: 0.06, gain: 0.11, attack: 0.002 }),
-    del: () => tone({ f0: 1000, f1: 520, glide: 0.022, dur: 0.06, gain: 0.1, attack: 0.002 }),
+    tap: () => drop(700, { gain: 0.07, dur: 0.045 }),
+    key: () => drop(560),
+    del: () => drop(520, { down: true, gain: 0.1 }),
+    toggleOn: () => { drop(600, { gain: 0.08 }); drop(800, { gain: 0.08, delay: 0.07 }); },
+    toggleOff: () => drop(600, { down: true, gain: 0.085, dur: 0.07 }),
+    paid: () => [520, 650, 780].forEach((f, i) => drop(f, { gain: 0.09, delay: i * 0.06 })),
+    success: () => [400, 500, 600, 800].forEach((f, i) => drop(f, { gain: 0.085, dur: 0.07, delay: i * 0.075 })),
+    error: () => { drop(260, { down: true, gain: 0.12, dur: 0.09 }); drop(230, { down: true, gain: 0.11, dur: 0.1, delay: 0.12 }); },
   },
 };
-let keyVoice = getItem("ea.keySound", "soft");
-if (!KEY_VOICES[keyVoice]) keyVoice = "soft";
-export const keypadSound = () => keyVoice;
-export function setKeypadSound(v) { if (KEY_VOICES[v]) { keyVoice = v; setItem("ea.keySound", v); } }
-export function previewKeypad() { [1, 2, 3].forEach((n, i) => setTimeout(() => play("key", n), i * 120)); }
+// Stored under the key the keypad picker used, so the choice already made carries over.
+let theme = getItem("ea.keySound", "soft");
+if (!THEMES[theme]) theme = "soft";
+export const soundTheme = () => theme;
+export function setSoundTheme(v) { if (THEMES[v]) { theme = v; setItem("ea.keySound", v); } }
+export function previewTheme() { [["tap"], ["key", 1], ["key", 2], ["key", 3], ["toggleOn"]].forEach(([n, a], i) => setTimeout(() => play(n, a), i * 130)); }
 
-const SOUNDS = {
-  tap: () => { tone({ f0: 1700, f1: 900, dur: 0.04, gain: 0.09 }); tone({ f0: 3400, f1: 2400, dur: 0.012, gain: 0.025 }); },
-  key: (n) => KEY_VOICES[keyVoice].key(n),
-  del: (n) => KEY_VOICES[keyVoice].del(n),
-  toggleOn: () => { tone({ f0: 880, dur: 0.06, gain: 0.08 }); tone({ f0: 1320, dur: 0.09, gain: 0.07, delay: 0.05 }); },
-  toggleOff: () => tone({ f0: 760, f1: 520, dur: 0.09, gain: 0.08 }),
-  paid: () => [784, 988, 1319].forEach((f, i) => tone({ f0: f, dur: 0.2, gain: 0.08, delay: i * 0.055 })),
-  success: () => [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => tone({ f0: f, dur: 0.26, gain: 0.07, delay: i * 0.07 })),
-  error: () => { tone({ f0: 230, f1: 160, dur: 0.12, type: "triangle", gain: 0.14 }); tone({ f0: 210, f1: 150, dur: 0.13, type: "triangle", gain: 0.11, delay: 0.13 }); },
-};
-export function play(name = "tap", arg) { try { SOUNDS[name]?.(arg); } catch { /* never let audio break the UI */ } }
+export function play(name = "tap", arg) { try { THEMES[theme][name]?.(arg); } catch { /* never let audio break the UI */ } }
 
 // iOS Safari has no vibrate(); toggling a hidden native switch gives a light system haptic (iOS 18+).
 let hapticLabel = null;
@@ -114,6 +134,24 @@ export function haptic() {
 
 const TARGET = 'button:not(:disabled), a.btn, .key:not(:disabled)';
 const reduceMotion = () => window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+
+// A soft ripple wherever a finger lands, styled by the sound theme.
+let rippleLayer = null;
+function ripple(x, y) {
+  if (reduceMotion()) return;
+  if (!rippleLayer || !rippleLayer.isConnected) {
+    rippleLayer = document.createElement("div");
+    rippleLayer.className = "ripple-layer";
+    rippleLayer.setAttribute("aria-hidden", "true");
+    document.body.appendChild(rippleLayer);
+  }
+  const el = document.createElement("span");
+  el.className = "ripple ripple-" + theme;
+  el.style.left = x + "px";
+  el.style.top = y + "px";
+  rippleLayer.appendChild(el);
+  setTimeout(() => el.remove(), 900);
+}
 
 function pulse(host, x, y) {
   if (reduceMotion()) return;
@@ -148,14 +186,13 @@ export function initFeedback() {
   document.addEventListener("touchstart", () => {}, { passive: true });
 
   document.addEventListener("pointerdown", (e) => {
-    if (e.button !== 0) return;
+    if (e.button !== 0 || !e.isPrimary) return;
     const t = e.target instanceof Element ? e.target.closest(TARGET) : null;
-    if (!t) return;
-    const host = t.closest("[data-pulse-host]") || t;
-    const s = t.dataset.sound || (t.classList.contains("key") ? "none" : "tap");
+    const host = t ? t.closest("[data-pulse-host]") || t : null;
+    const s = t ? t.dataset.sound || (t.classList.contains("key") ? "none" : "tap") : "none";
     const x = e.clientX, y = e.clientY;
-    const fire = () => { pulse(host, x, y); if (s !== "none") play(s); };
-    if (e.pointerType === "mouse" || t.classList.contains("key")) { fire(); return; }
+    const fire = () => { ripple(x, y); if (host) pulse(host, x, y); if (s !== "none") play(s); };
+    if (e.pointerType === "mouse" || t?.classList.contains("key")) { fire(); return; }
 
     // A touch might be the start of a swipe. Wait a beat (or for the finger to lift) so swiping
     // never clicks or ripples. PIN keys skip this and respond on touch-down.

@@ -1,6 +1,17 @@
 // Newest first. Add a new entry (and bump VERSION in config.js) with every release.
 export const CHANGELOG = [
   {
+    version: "1.4.0",
+    date: "October 12, 2026",
+    title: "Sound themes and tap ripples",
+    items: [
+      "Soft, Chime and Droplet are now full sound themes: every button, switch, PIN key, payment and sign-in follows the one you pick.",
+      "A subtle ripple appears wherever you tap, styled to match: a warm glow for Soft, a thin accent ring for Chime, and spreading rings for Droplet.",
+      "Swiping and scrolling never ripple or click; only real taps do.",
+      "Pick your theme in Settings, under Feel.",
+    ],
+  },
+  {
     version: "1.3.2",
     date: "October 12, 2026",
     title: "Updates arrive on their own",

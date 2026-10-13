@@ -10,7 +10,7 @@ import { authApi, getDevice, clearDevice, notifyApi } from "../lib/api.js";
 import { enablePush, disablePushHere, currentSubscription, pushBlocker } from "../lib/push.js";
 import { shortDate, isoToNyDate } from "../lib/dates.js";
 import { VERSION } from "../config.js";
-import { soundsEnabled, setSoundsEnabled, soundsOnSilent, setSoundsOnSilent, play, KEYPAD_VOICES, keypadSound, setKeypadSound, previewKeypad } from "../lib/feedback.js";
+import { soundsEnabled, setSoundsEnabled, soundsOnSilent, setSoundsOnSilent, play, SOUND_THEMES, soundTheme, setSoundTheme, previewTheme } from "../lib/feedback.js";
 import { isIOS } from "../lib/platform.js";
 
 export default function Settings({ hh, onBack, toast, onShowChangelog }) {
@@ -22,7 +22,7 @@ export default function Settings({ hh, onBack, toast, onShowChangelog }) {
   const [pinOpen, setPinOpen] = useState(false);
   const [sounds, setSounds] = useState(soundsEnabled());
   const [onSilent, setOnSilent] = useState(soundsOnSilent());
-  const [keyVoice, setKeyVoice] = useState(keypadSound());
+  const [sndTheme, setSndTheme] = useState(soundTheme());
   const thisDevice = getDevice()?.id;
   const blocker = pushBlocker();
 
@@ -114,9 +114,10 @@ export default function Settings({ hh, onBack, toast, onShowChangelog }) {
         </div>
         {(
           <div className="row" style={{ flexDirection: "column", alignItems: "stretch", gap: 10 }}>
-            <span className="k">PIN keypad sound</span>
-            <Segmented id="keyvoice" value={keyVoice} sound="none" options={KEYPAD_VOICES}
-              onChange={(v) => { setKeypadSound(v); setKeyVoice(v); previewKeypad(); }} />
+            <span className="k">Sound theme</span>
+            <Segmented id="sndtheme" value={sndTheme} sound="none" options={SOUND_THEMES}
+              onChange={(v) => { setSoundTheme(v); setSndTheme(v); previewTheme(); }} />
+            <span className="theme-note">Sets every sound in the app and the ripple where you tap.</span>
           </div>
         )}
         {sounds && isIOS() && (
