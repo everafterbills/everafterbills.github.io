@@ -112,7 +112,7 @@ export default function Settings({ hh, onBack, toast, onShowChangelog }) {
           <Toggle checked={sounds} label="Sounds and haptics"
             onChange={(v) => { setSoundsEnabled(v); setSounds(v); if (v) setTimeout(() => play("toggleOn"), 30); }} />
         </div>
-        {sounds && (
+        {(
           <div className="row" style={{ flexDirection: "column", alignItems: "stretch", gap: 10 }}>
             <span className="k">PIN keypad sound</span>
             <Segmented id="keyvoice" value={keyVoice} sound="none" options={KEYPAD_VOICES}

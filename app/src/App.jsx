@@ -21,6 +21,7 @@ import { buildMonth, summarize } from "./lib/billing.js";
 import { getItem, setItem } from "./lib/storage.js";
 import { VERSION } from "./config.js";
 import { getDemo } from "./lib/demo.js";
+import { takeJustUpdated } from "./lib/update.js";
 const DEMO = import.meta.env.DEV && location.search.includes("demo");
 
 // A screen that is animating away stops receiving taps immediately and sits underneath the new one,
@@ -87,6 +88,7 @@ export default function App() {
   }, []);
 
   useEffect(() => { document.documentElement.style.setProperty("--accent", theme.accent); }, [theme]);
+  useEffect(() => { const v = takeJustUpdated(); if (v) setTimeout(() => toast(`Updated to v${v}`), 900); }, [toast]);
 
   useEffect(() => {
     if (DEMO) { setSession(location.search.includes("signedout") ? null : getDemo().session); return; }

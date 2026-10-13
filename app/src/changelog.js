@@ -1,6 +1,16 @@
 // Newest first. Add a new entry (and bump VERSION in config.js) with every release.
 export const CHANGELOG = [
   {
+    version: "1.3.2",
+    date: "October 12, 2026",
+    title: "Updates arrive on their own",
+    items: [
+      "Ever After checks for a new version whenever you open it or come back to it, and updates itself.",
+      "After an update, a note at the top tells you which version you're on.",
+      "The PIN keypad sound picker in Settings always shows.",
+    ],
+  },
+  {
     version: "1.3.1",
     date: "October 12, 2026",
     title: "Gentler keypad, higher PIN pad",

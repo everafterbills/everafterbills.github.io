@@ -6,6 +6,7 @@ import "./styles.css";
 import App from "./App.jsx";
 import { initFeedback } from "./lib/feedback.js";
 import { initViewport } from "./lib/viewport.js";
+import { initUpdates } from "./lib/update.js";
 
 // Refuse to run inside someone else's frame (clickjacking protection; GitHub Pages can't send headers).
 if (window.top !== window.self) {
@@ -15,6 +16,7 @@ if (window.top !== window.self) {
 
 initViewport();
 initFeedback();
+initUpdates();
 
 const fontsReady = Promise.race([
   Promise.all([
