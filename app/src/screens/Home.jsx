@@ -25,13 +25,13 @@ export function Welcome({ theme, onSignIn }) {
 export function HomeMenu({ me, summary, theme, onBills, onSettings, onSignOut }) {
   const first = me?.display_name || "";
   return (
-    <div className="column">
+    <div className="column home">
       <div className="home-top">
         <Mark />
         <Wordmark as="h1" />
         {theme.note && <span className="season-note" style={{ marginTop: 6 }}>{theme.note}</span>}
       </div>
-      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12, duration: 0.35 }}>
+      <motion.div className="home-body" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12, duration: 0.35 }}>
         <p className="hello">{greeting()}{first ? `, ${first}` : ""}</p>
         <p className="hello-sum">
           {summary == null ? " " : summary.open === 0

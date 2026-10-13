@@ -1,6 +1,18 @@
 // Newest first. Add a new entry (and bump VERSION in config.js) with every release.
 export const CHANGELOG = [
   {
+    version: "1.2.0",
+    date: "October 12, 2026",
+    title: "Faster PIN pad and clearer sounds",
+    items: [
+      "PIN keys register the instant you touch them, with a click and a pop on each dot.",
+      "Louder, crisper sounds, plus a Settings switch to hear them even when your iPhone is on silent.",
+      "The current month now sits centered in the month picker.",
+      "The bottom of the screen blends into the strip iOS 26 reserves for home-screen apps.",
+      "The background holds still behind pop-ups and lists, so scrolling and taps stay smooth.",
+    ],
+  },
+  {
     version: "1.1.0",
     date: "October 12, 2026",
     title: "Smoother and snappier",

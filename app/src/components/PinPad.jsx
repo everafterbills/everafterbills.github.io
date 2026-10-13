@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { motion, useAnimationControls } from "framer-motion";
 import { Delete } from "lucide-react";
 import { play } from "../lib/feedback.js";
@@ -13,6 +13,7 @@ export default function PinPad({ title, subtitle, onSubmit, footer, autoFocusKey
   const [lockedUntil, setLockedUntil] = useState(null);
   const [now, setNow] = useState(Date.now());
   const shake = useAnimationControls();
+  const viaPointer = useRef(false);
   const locked = lockedUntil && lockedUntil > now;
 
   useEffect(() => {
@@ -24,9 +25,16 @@ export default function PinPad({ title, subtitle, onSubmit, footer, autoFocusKey
   const press = useCallback((k) => {
     if (busy || locked) return;
     setMsg("");
+    play("key");
     if (k === "del") setPin((p) => p.slice(0, -1));
     else setPin((p) => (p.length < 6 ? p + k : p));
   }, [busy, locked]);
+
+  // Register on touch-down (no waiting for the finger to lift); click still works for keyboards.
+  const keyProps = (k) => ({
+    onPointerDown: (e) => { if (e.button > 0) return; viaPointer.current = true; press(k); },
+    onClick: () => { if (viaPointer.current) { viaPointer.current = false; return; } press(k); },
+  });
 
   useEffect(() => {
     if (!autoFocusKeys) return;
@@ -68,8 +76,8 @@ export default function PinPad({ title, subtitle, onSubmit, footer, autoFocusKey
       <motion.div className="dots" animate={shake} aria-label={`${pin.length} of 6 digits entered`} role="status">
         {Array.from({ length: 6 }, (_, i) => (
           <motion.span key={i} className={i < pin.length ? "on" : ""}
-            animate={busy ? { opacity: [1, 0.35, 1] } : { opacity: 1 }}
-            transition={busy ? { duration: 0.9, repeat: Infinity, delay: i * 0.08 } : {}} />
+            animate={busy ? { opacity: [1, 0.35, 1], scale: 1 } : { opacity: 1, scale: i < pin.length ? [1.35, 1] : 1 }}
+            transition={busy ? { duration: 0.9, repeat: Infinity, delay: i * 0.08 } : { duration: 0.16, ease: "easeOut" }} />
         ))}
       </motion.div>
       <div className="msg">{locked ? `Too many wrong PINs. Try again in ${mmss}.` : msg}</div>
@@ -77,11 +85,11 @@ export default function PinPad({ title, subtitle, onSubmit, footer, autoFocusKey
         {KEYS.map((k, i) =>
           k === "" ? <span key={i} /> :
           k === "del" ? (
-            <button key={i} type="button" className="key ghost" onClick={() => press("del")} aria-label="Delete" disabled={busy || locked}>
+            <button key={i} type="button" className="key ghost" {...keyProps("del")} aria-label="Delete" disabled={busy || locked}>
               <Delete size={26} style={{ margin: "auto" }} />
             </button>
           ) : (
-            <button key={i} type="button" className="key" onClick={() => press(k)} disabled={busy || locked}>{k}</button>
+            <button key={i} type="button" className="key" {...keyProps(k)} disabled={busy || locked}>{k}</button>
           )
         )}
       </div>

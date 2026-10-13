@@ -13,6 +13,7 @@ import LockScreen from "./screens/LockScreen.jsx";
 import { supabase } from "./lib/supabase.js";
 import { authApi, clearDevice } from "./lib/api.js";
 import { useHousehold } from "./lib/useHousehold.js";
+import { useSheetsOpen } from "./lib/calm.js";
 import { seasonalTheme } from "./lib/theme.js";
 import { isMobile, isStandalone } from "./lib/platform.js";
 import { useToday } from "./lib/dates.js";
@@ -77,6 +78,7 @@ export default function App() {
   const [seen, setSeen] = useState(() => getItem("ea.seenVersion"));
   const hh = useHousehold(session);
   const today = useToday();
+  const sheetsOpen = useSheetsOpen();
 
   const toast = useCallback((text, tone) => {
     const id = Date.now() + Math.random();
@@ -117,13 +119,14 @@ export default function App() {
   }, [hh.me, hh.bills, hh.periodsByKey, hh.loading, today]);
 
   if (gated) return (<><Background theme={theme} /><InstallGate /></>);
+  const calm = sheetsOpen || locked || screen !== "home";
 
   const signedIn = !!session && !!hh.me;
   const openLog = () => { setShowLog(true); setItem("ea.seenVersion", VERSION); setSeen(VERSION); };
 
   return (
     <>
-      <Background theme={theme} />
+      <Background theme={theme} calm={calm} />
       <div className="app">
         <LayoutGroup>
           <AnimatePresence initial={false} custom={dir}>
@@ -172,6 +175,7 @@ export default function App() {
             onUntrusted={() => { clearDevice(); signOut(); }} />
         )}
       </AnimatePresence>
+      <div className="edge-fade" aria-hidden="true" />
       <Toast toast={toastMsg} />
     </>
   );

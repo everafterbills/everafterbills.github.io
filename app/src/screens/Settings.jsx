@@ -10,7 +10,8 @@ import { authApi, getDevice, clearDevice, notifyApi } from "../lib/api.js";
 import { enablePush, disablePushHere, currentSubscription, pushBlocker } from "../lib/push.js";
 import { shortDate, isoToNyDate } from "../lib/dates.js";
 import { VERSION } from "../config.js";
-import { soundsEnabled, setSoundsEnabled, play } from "../lib/feedback.js";
+import { soundsEnabled, setSoundsEnabled, soundsOnSilent, setSoundsOnSilent, play } from "../lib/feedback.js";
+import { isIOS } from "../lib/platform.js";
 
 export default function Settings({ hh, onBack, toast, onShowChangelog }) {
   const me = hh.me;
@@ -20,6 +21,7 @@ export default function Settings({ hh, onBack, toast, onShowChangelog }) {
   const [confirmId, setConfirmId] = useState(null);
   const [pinOpen, setPinOpen] = useState(false);
   const [sounds, setSounds] = useState(soundsEnabled());
+  const [onSilent, setOnSilent] = useState(soundsOnSilent());
   const thisDevice = getDevice()?.id;
   const blocker = pushBlocker();
 
@@ -109,8 +111,19 @@ export default function Settings({ hh, onBack, toast, onShowChangelog }) {
           <Toggle checked={sounds} label="Sounds and haptics"
             onChange={(v) => { setSoundsEnabled(v); setSounds(v); if (v) setTimeout(() => play("toggleOn"), 30); }} />
         </div>
+        {sounds && isIOS() && (
+          <div className="row">
+            <span style={{ flex: 1, paddingLeft: 32 }}>Play sounds when on silent</span>
+            <Toggle checked={onSilent} label="Play sounds when on silent"
+              onChange={(v) => { setSoundsOnSilent(v); setOnSilent(v); setTimeout(() => play("toggleOn"), 60); }} />
+          </div>
+        )}
       </div>
-      <p className="field-note">Soft clicks and taps on this device. They follow your phone's silent switch.</p>
+      <p className="field-note">
+        {isIOS()
+          ? (onSilent ? "Sounds play even with your iPhone on silent. Music from other apps pauses while you tap around." : "Sounds follow your iPhone's silent mode. Turn on \"Play sounds when on silent\" to hear them anyway.")
+          : "Soft clicks and taps on this device."}
+      </p>
 
       <h2 className="section-h"><span>Security</span></h2>
       <div className="group">

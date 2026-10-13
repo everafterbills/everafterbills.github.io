@@ -4,9 +4,12 @@ import { authApi } from "../lib/api.js";
 import { setItem } from "../lib/storage.js";
 import { pinError } from "./SignIn.jsx";
 import { play } from "../lib/feedback.js";
+import { useEffect } from "react";
+import { sheetOpened, sheetClosed } from "../lib/calm.js";
 
 export default function LockScreen({ name, onUnlocked, onSignOut, onUntrusted }) {
   const isPresent = useIsPresent();
+  useEffect(() => { sheetOpened(); return sheetClosed; }, []);
   const submit = async (pin) => {
     const r = await authApi.login(pin);
     if (r.ok) { setItem("ea.lastSeen", Date.now()); play("success"); onUnlocked(); return { ok: true }; }

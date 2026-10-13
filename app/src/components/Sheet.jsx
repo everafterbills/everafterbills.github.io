@@ -1,12 +1,14 @@
 import { useEffect, useRef } from "react";
 import { motion, useDragControls, useIsPresent } from "framer-motion";
 import { X } from "lucide-react";
+import { sheetOpened, sheetClosed } from "../lib/calm.js";
 
 // Bottom sheet on phones, centered dialog on wide screens. Swipe down or tap outside to close.
 export default function Sheet({ title, onClose, children, actions, dismissible = true, label }) {
   const controls = useDragControls();
   const ref = useRef(null);
   const isPresent = useIsPresent();
+  useEffect(() => { sheetOpened(); return sheetClosed; }, []);
   useEffect(() => {
     const onKey = (e) => { if (e.key === "Escape" && dismissible) onClose?.(); };
     window.addEventListener("keydown", onKey);

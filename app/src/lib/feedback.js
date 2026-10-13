@@ -3,8 +3,15 @@ import { getItem, setItem } from "./storage.js";
 import { isIOS } from "./platform.js";
 
 let enabled = getItem("ea.sound", true);
+let onSilent = getItem("ea.soundOnSilent", false);
 export const soundsEnabled = () => enabled;
 export function setSoundsEnabled(v) { enabled = !!v; setItem("ea.sound", enabled); }
+export const soundsOnSilent = () => onSilent;
+// "playback" ignores the iPhone silent switch (and pauses other audio like music); "ambient" respects it.
+function applySession() {
+  try { if (navigator.audioSession) navigator.audioSession.type = onSilent ? "playback" : "ambient"; } catch { /* older Safari */ }
+}
+export function setSoundsOnSilent(v) { onSilent = !!v; setItem("ea.soundOnSilent", onSilent); applySession(); }
 
 let ctx = null, out = null;
 function audio(create = true) {
@@ -12,7 +19,7 @@ function audio(create = true) {
   if (!ctx && create) {
     const AC = window.AudioContext || window.webkitAudioContext;
     if (!AC) return null;
-    try { if (navigator.audioSession) navigator.audioSession.type = "ambient"; } catch { /* older Safari */ }
+    applySession();
     ctx = new AC({ latencyHint: "interactive" });
     out = ctx.createGain();
     out.gain.value = 0.85;
@@ -20,7 +27,7 @@ function audio(create = true) {
     out.connect(comp);
     comp.connect(ctx.destination);
   }
-  if (ctx && ctx.state === "suspended") ctx.resume().catch(() => {});
+  if (ctx && (ctx.state === "suspended" || ctx.state === "interrupted")) ctx.resume().catch(() => {});
   return ctx;
 }
 
@@ -40,13 +47,13 @@ function tone({ f0, f1 = f0, dur = 0.05, type = "sine", gain = 0.04, delay = 0, 
 }
 
 const SOUNDS = {
-  tap: () => tone({ f0: 1500, f1: 820, dur: 0.045, gain: 0.032 }),
-  key: () => tone({ f0: 640, f1: 470, dur: 0.065, type: "triangle", gain: 0.045 }),
-  toggleOn: () => { tone({ f0: 880, dur: 0.06, gain: 0.032 }); tone({ f0: 1320, dur: 0.08, gain: 0.028, delay: 0.05 }); },
-  toggleOff: () => tone({ f0: 760, f1: 520, dur: 0.08, gain: 0.03 }),
-  paid: () => [784, 988, 1319].forEach((f, i) => tone({ f0: f, dur: 0.18, gain: 0.034, delay: i * 0.055 })),
-  success: () => [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => tone({ f0: f, dur: 0.24, gain: 0.03, delay: i * 0.07 })),
-  error: () => { tone({ f0: 230, f1: 160, dur: 0.11, type: "triangle", gain: 0.055 }); tone({ f0: 210, f1: 150, dur: 0.12, type: "triangle", gain: 0.045, delay: 0.12 }); },
+  tap: () => { tone({ f0: 1700, f1: 900, dur: 0.04, gain: 0.09 }); tone({ f0: 3400, f1: 2400, dur: 0.012, gain: 0.025 }); },
+  key: () => { tone({ f0: 720, f1: 470, dur: 0.07, type: "triangle", gain: 0.13 }); tone({ f0: 2600, f1: 1800, dur: 0.01, gain: 0.03 }); },
+  toggleOn: () => { tone({ f0: 880, dur: 0.06, gain: 0.08 }); tone({ f0: 1320, dur: 0.09, gain: 0.07, delay: 0.05 }); },
+  toggleOff: () => tone({ f0: 760, f1: 520, dur: 0.09, gain: 0.08 }),
+  paid: () => [784, 988, 1319].forEach((f, i) => tone({ f0: f, dur: 0.2, gain: 0.08, delay: i * 0.055 })),
+  success: () => [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => tone({ f0: f, dur: 0.26, gain: 0.07, delay: i * 0.07 })),
+  error: () => { tone({ f0: 230, f1: 160, dur: 0.12, type: "triangle", gain: 0.14 }); tone({ f0: 210, f1: 150, dur: 0.13, type: "triangle", gain: 0.11, delay: 0.13 }); },
 };
 export function play(name = "tap") { try { SOUNDS[name]?.(); } catch { /* never let audio break the UI */ } }
 
@@ -93,9 +100,19 @@ function pulse(host, x, y) {
 
 export function initFeedback() {
   // Unlock audio on the first real gesture (Safari only allows it on touchend/click).
-  const unlock = () => { audio(); };
+  const unlock = () => {
+    const c = audio();
+    if (!c) return;
+    try {
+      const src = c.createBufferSource();
+      src.buffer = c.createBuffer(1, 1, 22050);
+      src.connect(c.destination);
+      src.start(0);
+    } catch { /* ignore */ }
+  };
   document.addEventListener("touchend", unlock, { passive: true });
   document.addEventListener("click", unlock, { passive: true });
+  document.addEventListener("visibilitychange", () => { if (!document.hidden && ctx) audio(false); });
   // Lets :active styles work on iOS.
   document.addEventListener("touchstart", () => {}, { passive: true });
 
@@ -105,7 +122,7 @@ export function initFeedback() {
     if (!t) return;
     const host = t.closest("[data-pulse-host]") || t;
     pulse(host, e.clientX, e.clientY);
-    const s = t.dataset.sound || (t.classList.contains("key") ? "key" : "tap");
+    const s = t.dataset.sound || (t.classList.contains("key") ? "none" : "tap");
     if (s !== "none") play(s);
   }, { passive: true });
 

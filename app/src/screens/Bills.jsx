@@ -159,9 +159,23 @@ export default function Bills({ hh, onBack, toast, today }) {
             <button className="icon-btn" onClick={() => canBack && setYm(addMonths(ym.y, ym.m, -1))} disabled={!canBack} aria-label="Previous month" style={{ opacity: canBack ? 1 : 0.3 }}>
               <ChevronLeft size={20} />
             </button>
-            <button className="label" onClick={() => setYm({ y: today.y, m: today.m })} aria-label="Jump to this month">
-              {monthLabel(ym.y, ym.m)}
-              <span className="today" style={{ visibility: isCurrent ? "hidden" : "visible" }}>Back to this month</span>
+            <button className="label" onClick={() => setYm({ y: today.y, m: today.m })}
+              aria-label={isCurrent ? monthLabel(ym.y, ym.m) : `${monthLabel(ym.y, ym.m)}. Jump back to this month`}>
+              <motion.span className="m" initial={false} animate={{ y: isCurrent ? 0 : -9 }}
+                transition={{ type: "spring", stiffness: 520, damping: 36 }}>
+                <AnimatePresence initial={false} mode="popLayout">
+                  <motion.span key={ym.y * 12 + ym.m} style={{ display: "inline-block" }}
+                    initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.16 }}>
+                    {monthLabel(ym.y, ym.m)}
+                  </motion.span>
+                </AnimatePresence>
+              </motion.span>
+              <AnimatePresence initial={false}>
+                {!isCurrent && (
+                  <motion.span key="hint" className="today" initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 12 }} exit={{ opacity: 0, y: 4 }}
+                    transition={{ type: "spring", stiffness: 520, damping: 36 }}>Back to this month</motion.span>
+                )}
+              </AnimatePresence>
             </button>
             <button className="icon-btn" onClick={() => canFwd && setYm(addMonths(ym.y, ym.m, 1))} disabled={!canFwd} aria-label="Next month" style={{ opacity: canFwd ? 1 : 0.3 }}>
               <ChevronRight size={20} />

@@ -23,13 +23,14 @@
   --font-num: ui-rounded, "SF Pro Rounded", -apple-system, BlinkMacSystemFont, system-ui, "Segoe UI", sans-serif;
   --font-brand: "Fraunces Variable", "Iowan Old Style", Georgia, serif;
   --safe-t: env(safe-area-inset-top, 0px);
-  --safe-b: env(safe-area-inset-bottom, 0px);
+  --safe-b: max(0px, calc(env(safe-area-inset-bottom, 0px) - var(--ios-gap, 0px)));
   --safe-l: env(safe-area-inset-left, 0px);
   --safe-r: env(safe-area-inset-right, 0px);
   color-scheme: dark;
 }
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+button, a, .key, [role="switch"] { touch-action: manipulation; }
 html, body, #root { height: 100%; }
 html { background: var(--bg-0); }
 body {
@@ -78,8 +79,8 @@ button:disabled { cursor: default; }
   background: linear-gradient(180deg, var(--glass-hi), var(--glass));
   border: 1px solid var(--stroke);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16), var(--shadow);
-  -webkit-backdrop-filter: blur(26px) saturate(165%);
-  backdrop-filter: blur(26px) saturate(165%);
+  -webkit-backdrop-filter: blur(22px) saturate(160%);
+  backdrop-filter: blur(22px) saturate(160%);
 }
 .panel { border-radius: var(--r-lg); overflow: hidden; }
 
@@ -107,7 +108,7 @@ button:disabled { cursor: default; }
 .num { font-family: var(--font-num); font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
 
 /* ───────── Welcome / home ───────── */
-.welcome { min-height: calc(100dvh - var(--safe-t) - var(--safe-b) - 54px); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 0; }
+.welcome { min-height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 0; }
 .welcome .mark { width: clamp(96px, 32vw, 136px); height: clamp(96px, 32vw, 136px); filter: drop-shadow(0 10px 30px rgba(242, 167, 184, 0.35)); }
 .welcome .wordmark { font-size: clamp(42px, 13vw, 60px); margin-top: clamp(12px, 3vh, 20px); }
 .tagline { margin: 12px 0 0; color: var(--text-2); font-size: 17px; }
@@ -158,9 +159,11 @@ a.btn-primary { color: #2a1530; }
 .topbar .spacer { width: 42px; }
 
 /* ───────── Bills ───────── */
-.month-switch { display: flex; align-items: center; justify-content: space-between; border-radius: 999px; padding: 4px; margin-bottom: 12px; }
-.month-switch .label { font-weight: 600; font-size: 16px; }
-.month-switch .today { display: block; font-size: 12px; color: var(--accent); font-weight: 500; }
+.month-switch { display: flex; align-items: center; justify-content: space-between; border-radius: 999px; padding: 4px; margin-bottom: 12px; height: 58px; }
+.month-switch .label { flex: 1; align-self: stretch; display: grid; place-items: center; font-weight: 600; font-size: 16px; border-radius: 999px; }
+.month-switch .label > * { grid-area: 1 / 1; }
+.month-switch .label .m { display: inline-block; white-space: nowrap; }
+.month-switch .today { font-size: 12px; color: var(--accent); font-weight: 500; white-space: nowrap; }
 .segmented { position: relative; display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; padding: 4px; border-radius: 999px; }
 .segmented button { position: relative; z-index: 1; min-height: 38px; font-size: 15px; font-weight: 600; color: var(--text-2); border-radius: 999px; transition: color .2s; }
 .segmented button[aria-pressed="true"] { color: var(--text); }
@@ -271,14 +274,14 @@ a.btn-primary { color: #2a1530; }
 .pin h3 { margin: 4px 0 6px; font-size: 22px; font-weight: 650; }
 .pin p { margin: 0; color: var(--text-2); font-size: 15px; min-height: 22px; }
 .dots { display: flex; gap: 16px; margin: clamp(14px, 3.4vh, 26px) 0 10px; }
-.dots span { width: 14px; height: 14px; border-radius: 50%; border: 1.5px solid rgba(255,255,255,.5); transition: background .15s, border-color .15s, transform .15s; }
-.dots span.on { background: var(--accent); border-color: var(--accent); transform: scale(1.08); }
+.dots span { width: 14px; height: 14px; border-radius: 50%; border: 1.5px solid rgba(255,255,255,.5); transition: background .06s, border-color .06s; }
+.dots span.on { background: var(--accent); border-color: var(--accent); }
 .pin .msg { min-height: 40px; font-size: 14.5px; color: var(--coral); max-width: 300px; display: flex; align-items: center; justify-content: center; }
 .pin { --key: clamp(62px, 19.5vw, 80px); }
 .keys { display: grid; grid-template-columns: repeat(3, var(--key)); gap: calc(var(--key) * 0.2) calc(var(--key) * 0.3); margin-top: 6px; }
-.key { width: var(--key); height: var(--key); border-radius: 50%; font-family: var(--font-num); font-size: calc(var(--key) * 0.41); font-weight: 500; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.12); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); transition: background .12s, transform .12s; }
-.key:active, .key.pressed { background: rgba(255,255,255,.3); transform: scale(.96); }
-.key.ghost { background: none; border-color: transparent; font-family: var(--font-ui); font-size: 15px; color: var(--text-2); }
+.key { width: var(--key); height: var(--key); border-radius: 50%; font-family: var(--font-num); font-size: calc(var(--key) * 0.41); font-weight: 500; background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.14); box-shadow: inset 0 1px 0 rgba(255,255,255,.12); transition: background .25s ease-out, transform .25s cubic-bezier(.2,.8,.3,1); will-change: transform; }
+.key:active { background: rgba(255,255,255,.34); transform: scale(.93); transition: none; }
+.key.ghost { background: none; border-color: transparent; box-shadow: none; font-family: var(--font-ui); font-size: 15px; color: var(--text-2); }
 .key:disabled { opacity: .4; }
 
 /* ───────── Install gate ───────── */
@@ -382,3 +385,20 @@ a.btn-primary { color: #2a1530; }
   .dots { margin: 8px 0 4px; }
   .pin .msg { min-height: 22px; font-size: 13px; }
 }
+
+/* Home: logo at the top, greeting and menu balanced in the space below */
+.home { min-height: 100%; display: flex; flex-direction: column; }
+.home-body { flex: 1; display: flex; flex-direction: column; justify-content: center; padding-bottom: clamp(24px, 9vh, 110px); }
+.home-body .hello { margin-top: 12px; }
+
+/* Calm mode (sheet open, or on Bills/Settings): background stops moving so the glass doesn't re-blur every frame */
+.backdrop.calm .aurora { animation-play-state: paused; }
+.particles { transition: opacity .5s ease; }
+.particles.hidden { opacity: 0; }
+
+/* iOS 26 home-screen apps reserve a strip at the bottom that pages can't draw into.
+   The background fades into the same color iOS paints there, so the edge disappears. */
+.backdrop::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 26%; pointer-events: none;
+  background: linear-gradient(to bottom, rgba(30, 20, 48, 0) 0%, rgba(30, 20, 48, .85) 70%, #1e1430 100%); }
+.edge-fade { position: fixed; left: 0; right: 0; bottom: 0; height: 22px; z-index: 6; pointer-events: none;
+  background: linear-gradient(to bottom, rgba(30, 20, 48, 0), #1e1430); }

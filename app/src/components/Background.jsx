@@ -1,24 +1,25 @@
 import { useEffect, useRef } from "react";
 
 // Slow aurora of the season's colors, plus a few seasonal particles.
-export default function Background({ theme }) {
+export default function Background({ theme, calm = false }) {
   const [c1, c2, c3] = theme.aurora;
   return (
-    <div className="backdrop" aria-hidden="true">
+    <div className={"backdrop" + (calm ? " calm" : "")} aria-hidden="true">
       <div className="aurora a1" style={{ background: `radial-gradient(circle, ${c1} 0%, transparent 62%)` }} />
       <div className="aurora a2" style={{ background: `radial-gradient(circle, ${c2} 0%, transparent 62%)` }} />
       <div className="aurora a3" style={{ background: `radial-gradient(circle, ${c3} 0%, transparent 65%)` }} />
       <div className="grain" />
-      {theme.particles && <Particles kind={theme.particles} colors={theme.aurora} />}
+      {theme.particles && <Particles kind={theme.particles} colors={theme.aurora} paused={calm} />}
     </div>
   );
 }
 
 const COUNTS = { snow: 34, leaves: 14, bats: 6, hearts: 14, sparkles: 22, clovers: 12, petals: 16 };
 
-function Particles({ kind, colors }) {
+function Particles({ kind, colors, paused }) {
   const ref = useRef(null);
   useEffect(() => {
+    if (paused) return; // canvas fades out via CSS; no frames drawn while calm
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const canvas = ref.current;
     const ctx = canvas.getContext("2d");
@@ -73,7 +74,8 @@ function Particles({ kind, colors }) {
     };
 
     const draw = (t) => {
-      const dt = Math.min(48, t - last) / 16.7; last = t;
+      if (t - last < 31) { raf = requestAnimationFrame(draw); return; } // ~30fps is plenty for drifting particles
+      const dt = Math.min(64, t - last) / 16.7; last = t;
       ctx.clearRect(0, 0, w, h);
       for (const p of ps) {
         p.phase += 0.02 * dt;
@@ -113,6 +115,6 @@ function Particles({ kind, colors }) {
     window.addEventListener("resize", resize);
     document.addEventListener("visibilitychange", onVis);
     return () => { cancelAnimationFrame(raf); window.removeEventListener("resize", resize); document.removeEventListener("visibilitychange", onVis); };
-  }, [kind, colors]);
-  return <canvas ref={ref} className="particles" />;
+  }, [kind, colors, paused]);
+  return <canvas ref={ref} className={"particles" + (paused ? " hidden" : "")} />;
 }
